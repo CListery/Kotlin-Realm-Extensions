@@ -1,0 +1,31 @@
+package com.yh.krealmextensions.util;
+
+import io.realm.internal.async.RealmThreadPoolExecutor;
+
+import static junit.framework.Assert.fail;
+
+public class TestHelper {
+
+    static final RealmThreadPoolExecutor asyncTaskExecutor = RealmThreadPoolExecutor.newDefaultExecutor();
+
+    /**
+     * Wait and check if all tasks in BaseRealm.asyncTaskExecutor can be finished in 5 seconds, otherwise fail the test.
+     */
+    public static void waitRealmThreadExecutorFinish() {
+        int counter = 50;
+        while (counter > 0) {
+            if (asyncTaskExecutor.getActiveCount() == 0) {
+                return;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                fail(e.getMessage());
+            }
+            counter--;
+        }
+        fail("'BaseRealm.asyncTaskExecutor' is not finished in " + counter/10 + " seconds");
+    }
+
+
+}

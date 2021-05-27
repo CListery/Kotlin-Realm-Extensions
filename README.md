@@ -95,7 +95,7 @@ If you need to provide your own Realm instance, you can use the saveManaged(Real
 
 ### Query entities
 
-* All query extensions return detached realm objects, using copyFromRealm() method. 
+* All query extensions return detached realm objects, using copy() method.
 * All query extensions has two versions. One is an extension of RealmModel, and you need to create an instance of that model to perform your query. The other version is a global parametrized funcion (thanks to @PrashamTrivedi). See below examples for details.
 
 #### Get first entity: Before (java)
@@ -103,7 +103,7 @@ If you need to provide your own Realm instance, you can use the saveManaged(Real
 Realm realm = Realm.getDefaultInstance();
 try {
    Event firstEvent = realm.where(Event.class).findFirst();
-   firstEvent = realm.copyFromRealm(event);
+   firstEvent = realm.copy(event);
 } finally {
    realm.close();
 }
@@ -122,7 +122,7 @@ You can use lastItem extension too.
 Realm realm = Realm.getDefaultInstance();
 try {
     List<Event> events = realm.where(Event.class).findAll();
-    events = realm.copyFromRealm(event);
+    events = realm.copy(event);
 } finally {
     realm.close();
 }
@@ -139,7 +139,7 @@ val events = Event().queryAll() //Or queryAll<Event>
 Realm realm = Realm.getDefaultInstance();
 try{
     List<Event> events = realm.where(Event.class).equalTo("id",1).findAll();
-    events = realm.copyFromRealm(event);
+    events = realm.copy(event);
 } finally {
     realm.close();
 }
@@ -194,7 +194,7 @@ Event().deleteAll() //Or deleteAll<Event>
 Realm realm = Realm.getDefaultInstance();
 try{
     List<Event> events = realm.where(Event.class).equalTo("id",1).findAll().deleteAllFromRealm();
-    events = realm.copyFromRealm(event);
+    events = realm.copy(event);
 } finally {
     realm.close();
 }
@@ -215,7 +215,7 @@ Realm realm = Realm.getDefaultInstance();
 Flowable<List<Event>> obs =  realm.where(Event.class).findAllAsync()
 .asFlowable()
 .filter(RealmResults::isLoaded)
-.map(realm::copyFromRealm)
+.map(realm::copy)
 .doOnUnsubscribe(() -> realm.close());
 ```
 
@@ -232,7 +232,7 @@ Realm realm = Realm.getDefaultInstance();
 Flowable<List<Event>> obs =  realm.where(Event.class).equalTo("id",1).findAllAsync()
 .asFlowable()
 .filter(RealmResults::isLoaded)
-.map(realm::copyFromRealm)
+.map(realm::copy)
 .doOnUnsubscribe(() -> realm.close());
 ```
 
