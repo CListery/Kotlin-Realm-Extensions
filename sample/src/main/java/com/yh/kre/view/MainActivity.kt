@@ -17,11 +17,17 @@ import com.yh.krealmextensions.deleteAll
 import com.yh.krealmextensions.getRealmInstance
 import com.yh.krealmextensions.queryAll
 import com.yh.krealmextensions.queryAllAsFlowable
+import com.yh.krealmextensions.queryAllAsSingle
 import com.yh.krealmextensions.queryAllAsync
+import com.yh.krealmextensions.queryAsync
 import com.yh.krealmextensions.saveAll
 import io.realm.Realm
 
 class MainActivity : AppCompatActivity() {
+    
+    companion object{
+        private const val TAG = "MainActivity"
+    }
     
     val dbSize = 100
     val userSize = 5
@@ -32,17 +38,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         setContentView(mMainActBinding.root)
-        
-        performTest("main thread") {
-            Thread {
-                performTest("background thread items") {
-                    // User perform Test
-                    performUserTest("main thread users") {
-                        Thread { performUserTest("background thread users") }.start()
-                    }
-                }
-            }.start()
-        }
+    
+        performUserTest("main thread users")
+        // performTest("main thread") {
+        //     Thread {
+        //         performTest("background thread items") {
+        //             // User perform Test
+        //             performUserTest("main thread users") {
+        //                 Thread { performUserTest("background thread users") }.start()
+        //             }
+        //         }
+        //     }.start()
+        // }
     }
     
     override fun onDestroy() {
@@ -94,27 +101,45 @@ class MainActivity : AppCompatActivity() {
         addMessage("Observing table changes...")
         
         val subscription = User().queryAllAsFlowable().subscribe {
-            addMessage("Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
+            addMessage("Flowable Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
+            addMessage("   name_2: ${it.find { u-> u.name == "name_2" }}")
+        }
+    
+        val singleSubscription = User().queryAllAsSingle().subscribe { it ->
+            addMessage("Single Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
         }
         
+        User().queryAllAsync {
+            addMessage("queryAllAsync1 Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
+        }
+    
         queryAllAsync<User> {
-        
+            addMessage("queryAllAsync2 Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
         }
         
         wait(1) {
             populateUserDb(10)
         }
-        
-        wait(if(isMainThread()) 2 else 1) {
-            populateUserDb(10)
+    
+        wait(if(isMainThread()) 2 else 1){
+            queryAsync<User>({ equalTo("name", "name_2") }, {
+                addMessage("queryAsync Change on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.first())
+                it.first().address = Address("sdlfjsdfljsdf")
+                it.saveAll()
+            })
         }
-        
+    
         wait(if(isMainThread()) 3 else 1) {
-            populateUserDb(10)
+            populateUserDb(10, 10)
         }
         
         wait(if(isMainThread()) 4 else 1) {
+            populateUserDb(10, 20)
+        }
+        
+        wait(if(isMainThread()) 5 else 1) {
             subscription.dispose()
+            singleSubscription.dispose()
             addMessage("Subscription finished")
             val defaultCount = Realm.getDefaultInstance().where(User::class.java).count()
             val userCount = User().getRealmInstance().where(User::class.java).count()
@@ -194,8 +219,8 @@ class MainActivity : AppCompatActivity() {
         return endTime - startTime
     }
     
-    private fun populateUserDb(numUsers: Int) {
-        Array(numUsers) { User("name_%d".format(it), Address("street_%d".format(it))) }.saveAll()
+    private fun populateUserDb(numUsers: Int, startPos:Int = 0) {
+        Array(numUsers) { User("name_%d".format(it.plus(startPos)), Address("street_%d".format(it.plus(startPos)))) }.saveAll()
     }
     
     private fun populateDB(numItems: Int) {
