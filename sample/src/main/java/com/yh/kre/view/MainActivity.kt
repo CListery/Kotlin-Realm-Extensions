@@ -19,13 +19,21 @@ import com.yh.krealmextensions.queryAll
 import com.yh.krealmextensions.queryAllAsFlowable
 import com.yh.krealmextensions.queryAllAsSingle
 import com.yh.krealmextensions.queryAllAsync
+import com.yh.krealmextensions.queryAllByChangeSetAsFlowable
 import com.yh.krealmextensions.queryAsync
+import com.yh.krealmextensions.save
 import com.yh.krealmextensions.saveAll
+import io.realm.OrderedCollectionChangeSet
+import io.realm.OrderedRealmCollectionChangeListener
 import io.realm.Realm
+import io.realm.RealmResults
+import io.realm.kotlin.where
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     
-    companion object{
+    companion object {
+        
         private const val TAG = "MainActivity"
     }
     
@@ -39,17 +47,16 @@ class MainActivity : AppCompatActivity() {
         
         setContentView(mMainActBinding.root)
     
-        performUserTest("main thread users")
-        // performTest("main thread") {
-        //     Thread {
-        //         performTest("background thread items") {
-        //             // User perform Test
-        //             performUserTest("main thread users") {
-        //                 Thread { performUserTest("background thread users") }.start()
-        //             }
-        //         }
-        //     }.start()
-        // }
+        performTest("main thread") {
+            Thread {
+                performTest("background thread items") {
+                    // User perform Test
+                    performUserTest("main thread users") {
+                        Thread { performUserTest("background thread users") }.start()
+                    }
+                }
+            }.start()
+        }
     }
     
     override fun onDestroy() {
@@ -102,33 +109,63 @@ class MainActivity : AppCompatActivity() {
         
         val subscription = User().queryAllAsFlowable().subscribe {
             addMessage("Flowable Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
-            addMessage("   name_2: ${it.find { u-> u.name == "name_2" }}")
+            // addMessage("   name_2: ${it.find { u -> u.name == "name_2" }}")
         }
-    
+        
+        val changeSetSubscription = queryAllByChangeSetAsFlowable<User>().subscribe {
+            fun List<User>.print(): String {
+                return map { u -> u.name }.joinToString(",")
+            }
+            addMessage("|ChangeSet - [${it.setState} - ${it.isOk}]")
+            when(it.setState) {
+                OrderedCollectionChangeSet.State.UPDATE -> {
+                    addMessage(
+                        """
+                        |   insert: ${it.insert.print()}
+                        |   change: ${it.change.print()}
+                        |   delete: ${it.delete.print()}
+                        """.trimIndent()
+                    )
+                }
+                OrderedCollectionChangeSet.State.ERROR  -> {
+                    addMessage("|   error: ${it.error}")
+                }
+                else                                    -> {
+                }
+            }
+        }
+        
         val singleSubscription = User().queryAllAsSingle().subscribe { it ->
-            addMessage("Single Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
+            addMessage("Single received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
         }
         
         User().queryAllAsync {
-            addMessage("queryAllAsync1 Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
+            addMessage("queryAllAsync1 received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
         }
-    
+        
         queryAllAsync<User> {
-            addMessage("queryAllAsync2 Changes received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
+            addMessage("queryAllAsync2 received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
         }
         
         wait(1) {
-            populateUserDb(10)
-        }
-    
-        wait(if(isMainThread()) 2 else 1){
             queryAsync<User>({ equalTo("name", "name_2") }, {
-                addMessage("queryAsync Change on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.first())
-                it.first().address = Address("sdlfjsdfljsdf")
-                it.saveAll()
+                addMessage("queryAsync1 name_2 on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, item: " + it.firstOrNull())
+            })
+            populateUserDb(10)
+            queryAsync<User>({ equalTo("name", "name_2") }, {
+                addMessage("queryAsync2 name_2 on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, item: " + it.firstOrNull())
             })
         }
-    
+        
+        wait(if(isMainThread()) 2 else 1) {
+            queryAsync<User>({ equalTo("name", "name_2") }, {
+                addMessage("queryAsync name_2 on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, items: " + it)
+                val user2 = it.first()
+                user2.address = Address("sdlfjsdfljsdf")
+                user2.save()
+            })
+        }
+        
         wait(if(isMainThread()) 3 else 1) {
             populateUserDb(10, 10)
         }
@@ -139,6 +176,7 @@ class MainActivity : AppCompatActivity() {
         
         wait(if(isMainThread()) 5 else 1) {
             subscription.dispose()
+            changeSetSubscription.dispose()
             singleSubscription.dispose()
             addMessage("Subscription finished")
             val defaultCount = Realm.getDefaultInstance().where(User::class.java).count()
@@ -219,8 +257,10 @@ class MainActivity : AppCompatActivity() {
         return endTime - startTime
     }
     
-    private fun populateUserDb(numUsers: Int, startPos:Int = 0) {
+    private fun populateUserDb(numUsers: Int, startPos: Int = 0) {
+        addMessage("Create users...")
         Array(numUsers) { User("name_%d".format(it.plus(startPos)), Address("street_%d".format(it.plus(startPos)))) }.saveAll()
+        addMessage("Create users done size: $numUsers")
     }
     
     private fun populateDB(numItems: Int) {

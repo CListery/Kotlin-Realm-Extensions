@@ -3,12 +3,12 @@ package com.yh.krealmextensions
 import android.os.Handler
 import android.os.Looper
 import io.realm.OrderedCollectionChangeSet
+import io.realm.OrderedRealmCollectionChangeListener
 import io.realm.RealmChangeListener
 import io.realm.RealmModel
 import io.realm.RealmResults
 import io.realm.kotlin.addChangeListener
 import io.realm.kotlin.removeChangeListener
-import io.realm.OrderedRealmCollectionChangeListener as OrderedRealmCollectionChangeListener1
 
 /**
  * Extensions for Realm. All methods here are asynchronous, and only notify changes once.
@@ -116,7 +116,7 @@ internal fun <T : RealmModel> queryAllAsync(callback: (List<T>, OrderedCollectio
         val realm = getRealmInstance(javaClass)
         
         val result = realm.where(javaClass).findAllAsync()
-        result.addChangeListener(object : OrderedRealmCollectionChangeListener1<RealmResults<T>> {
+        result.addChangeListener(object : OrderedRealmCollectionChangeListener<RealmResults<T>> {
             override fun onChange(t: RealmResults<T>, changeSet: OrderedCollectionChangeSet) {
                 result.removeChangeListener(this)
                 realm.use {
@@ -153,6 +153,44 @@ internal fun <T : RealmModel> queryAsync(query: Query<T>, callback: (List<T>) ->
                 }
                 if(isRealmThread()) {
                     Looper.myLooper()?.thread?.interrupt()
+                }
+            }
+        })
+    }
+}
+
+@PublishedApi
+internal fun <T : RealmModel> queryAllAsync(
+    query: Query<T>? = null,
+    javaClass: Class<T>,
+    callback: (insert: List<T>, change: List<T>, delete: List<T>, error: Throwable?) -> Unit
+) {
+    onLooperThread {
+        val realm = getRealmInstance(javaClass)
+        val realmQuery = realm.where(javaClass)
+        query?.invoke(realmQuery)
+        val result = realmQuery.findAllAsync()
+        
+        result.addChangeListener(object : OrderedRealmCollectionChangeListener<RealmResults<T>> {
+            override fun onChange(t: RealmResults<T>, changeSet: OrderedCollectionChangeSet) {
+                result.removeChangeListener(this)
+                when(changeSet.state) {
+                    OrderedCollectionChangeSet.State.UPDATE -> {
+                        val safeResult = realm.copy(t)
+                        val insert = safeResult.filterIndexed { index, _ -> changeSet.insertions.contains(index) }
+                        val change = safeResult.filterIndexed { index, _ -> changeSet.changes.contains(index) }
+                        val delete = safeResult.filterIndexed { index, _ -> changeSet.deletions.contains(index) }
+                        
+                        callback.invoke(insert, change, delete, null)
+                    }
+                    OrderedCollectionChangeSet.State.ERROR  -> {
+                        val exception = changeSet.error
+                        if(null != exception) {
+                            callback.invoke(emptyList(), emptyList(), emptyList(), exception)
+                        }
+                    }
+                    else                                    -> {
+                    }
                 }
             }
         })
