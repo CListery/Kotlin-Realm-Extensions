@@ -7,6 +7,7 @@ import io.realm.OrderedRealmCollectionChangeListener
 import io.realm.RealmChangeListener
 import io.realm.RealmModel
 import io.realm.RealmResults
+import io.realm.Sort
 import io.realm.kotlin.addChangeListener
 import io.realm.kotlin.removeChangeListener
 
@@ -74,6 +75,48 @@ inline fun <reified T : RealmModel> queryLastAsync(crossinline callback: (T?) ->
                 result.removeChangeListener(this)
                 realm.use {
                     callback.invoke(realm.copy(rr.lastOrNull()))
+                }
+                if(isRealmThread()) {
+                    Looper.myLooper()?.thread?.interrupt()
+                }
+            }
+        })
+    }
+}
+
+fun <T : RealmModel> T.querySortedAsync(callback: (List<T>) -> Unit, fieldName: String, order: Sort, query: Query<T>?) =
+    querySortedAsync(callback, listOf(fieldName), listOf(order), query, this.javaClass)
+inline fun <reified T : RealmModel> querySortedAsync(noinline callback: (List<T>) -> Unit, fieldName: String, order: Sort, noinline query: Query<T>?) =
+    querySortedAsync(callback, listOf(fieldName), listOf(order), query, T::class.java)
+
+fun <T : RealmModel> T.querySortedAsync(callback: (List<T>) -> Unit, fieldName: List<String>, order: List<Sort>, query: Query<T>?) =
+    querySortedAsync(callback, fieldName, order, query, this.javaClass)
+inline fun <reified T : RealmModel> querySortedAsync(noinline callback: (List<T>) -> Unit, fieldName: List<String>, order: List<Sort>, noinline query: Query<T>?) =
+    querySortedAsync(callback, fieldName, order, query, T::class.java)
+
+fun <T: RealmModel> T.querySortedAsync(callback: (List<T>) -> Unit, fieldName: String, order: Sort) =
+    querySortedAsync(callback, listOf(fieldName), listOf(order), null, this.javaClass)
+inline fun <reified T:RealmModel> querySortedAsync(noinline callback: (List<T>) -> Unit, fieldName: String, order: Sort) =
+    querySortedAsync(callback, listOf(fieldName), listOf(order), null, T::class.java)
+
+fun <T: RealmModel> T.querySortedAsync(callback: (List<T>) -> Unit, fieldName: List<String>, order: List<Sort>) =
+    querySortedAsync(callback, fieldName, order, null, this.javaClass)
+inline fun <reified T:RealmModel> querySortedAsync(noinline callback: (List<T>) -> Unit, fieldName: List<String>, order: List<Sort>) =
+    querySortedAsync(callback, fieldName, order, null, T::class.java)
+
+@PublishedApi
+internal fun <T : RealmModel> querySortedAsync(callback: (List<T>) -> Unit, fieldName: List<String>, order: List<Sort>, query: Query<T>?, javaClass: Class<T>) {
+    onLooperThread {
+        val realm = getRealmInstance(javaClass)
+        
+        val realmQuery = realm.where(javaClass)
+        query?.invoke(realmQuery)
+        val result = realmQuery.findAllAsync().sort(fieldName.toTypedArray(), order.toTypedArray())
+        result.addChangeListener(object : RealmChangeListener<RealmResults<T>> {
+            override fun onChange(t: RealmResults<T>) {
+                result.removeChangeListener(this)
+                realm.use {
+                    callback.invoke(realm.copy(t))
                 }
                 if(isRealmThread()) {
                     Looper.myLooper()?.thread?.interrupt()
