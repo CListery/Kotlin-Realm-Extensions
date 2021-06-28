@@ -6,6 +6,7 @@ import io.realm.RealmConfiguration
 import io.realm.RealmModel
 import io.realm.RealmObject
 import io.realm.annotations.RealmModule
+import java.lang.reflect.Constructor
 
 object RealmConfigManager {
     
@@ -29,16 +30,21 @@ object RealmConfigManager {
         mConfigs[modelClass] = builder.applyUiThreadOption(isEnableUiThreadOption).build()
         Log.d(TAG, "Adding class $modelClass to realm ${mConfigs[modelClass]?.realmFileName}")
     }
-    
+
     fun <T : Any> initModule(cls: Class<T>, builder: RealmConfiguration.Builder) {
         // check if class of the module
         val moduleAnnotation = cls.annotations.filterIsInstance<RealmModule>().firstOrNull()
         
         if(null != moduleAnnotation) {
+            val constructor: Constructor<*> = cls.declaredConstructors.firstOrNull()
+                ?: throw NullPointerException("Module $cls can not create!")
+            constructor.isAccessible = true
+            builder.addModule(cls.newInstance())
             Log.i(TAG, "Got annotation in module $moduleAnnotation")
             val realmModelClazz = moduleAnnotation.classes
             realmModelClazz.filter { it.java.interfaces.contains(RealmModel::class.java) }
                 .map {
+                    @Suppress("UNCHECKED_CAST")
                     it.java as Class<RealmModel>
                 }
                 .forEach {
@@ -46,6 +52,7 @@ object RealmConfigManager {
                 }
             realmModelClazz.filter { it.java.superclass == RealmObject::class.java }
                 .map {
+                    @Suppress("UNCHECKED_CAST")
                     it.java as Class<RealmObject>
                 }
                 .forEach {

@@ -275,7 +275,7 @@ inline fun <reified T : RealmModel> T.saveManaged(realm: Realm): T {
         if(isAutoIncrementPK()) {
             initPk(realm)
         }
-        
+
         result = if(this.hasPrimaryKey(it)) it.copyToRealmOrUpdate(this) else it.copyToRealm(this)
     }
     return result!!
@@ -448,17 +448,16 @@ inline fun <reified T : RealmModel> getPrimaryKeyFieldName(realm: Realm): String
 inline fun <reified T : RealmModel> T.setPk(realm: Realm, value: Long) {
     getPrimaryKeyFieldName(realm)?.let { fieldName ->
         val f1 = javaClass.getDeclaredField(fieldName)
-        try {
-            val accesible = f1.isAccessible
-            f1.isAccessible = true
-            if(f1.isNullFor(this)) {
-                //We only set pk value if it does not have any value previously
-                f1.set(this, value)
-            }
-            f1.isAccessible = accesible
-        } catch(ex: IllegalArgumentException) {
+        if (f1.type != Long::class.java) {
             throw IllegalArgumentException("Primary key field $fieldName must be of type Long to set a primary key automatically")
         }
+        val accesible = f1.isAccessible
+        f1.isAccessible = true
+        if (f1.isInValidLongPk(this)) {
+            //We only set pk value if it does not have any value previously
+            f1.set(this, value)
+        }
+        f1.isAccessible = accesible
     }
 }
 
@@ -492,3 +491,5 @@ fun Field.isNullFor(obj: Any) = try {
 } catch(ex: NullPointerException) {
     true
 }
+
+fun Field.isInValidLongPk(obj: Any) = isNullFor(obj) || get(obj) == Long.MIN_VALUE

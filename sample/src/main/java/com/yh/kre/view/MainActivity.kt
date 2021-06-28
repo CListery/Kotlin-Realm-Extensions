@@ -12,23 +12,11 @@ import com.yh.kre.extensions.wait
 import com.yh.kre.model.Address
 import com.yh.kre.model.Item
 import com.yh.kre.model.User
-import com.yh.krealmextensions.delete
-import com.yh.krealmextensions.deleteAll
-import com.yh.krealmextensions.getRealmInstance
-import com.yh.krealmextensions.queryAll
-import com.yh.krealmextensions.queryAllAsFlowable
-import com.yh.krealmextensions.queryAllAsSingle
-import com.yh.krealmextensions.queryAllAsync
-import com.yh.krealmextensions.queryAllByChangeSetAsFlowable
-import com.yh.krealmextensions.queryAsync
-import com.yh.krealmextensions.save
-import com.yh.krealmextensions.saveAll
-import io.realm.OrderedCollectionChangeSet
-import io.realm.OrderedRealmCollectionChangeListener
-import io.realm.Realm
-import io.realm.RealmResults
+import com.yh.krealmextensions.*
+import io.realm.*
 import io.realm.kotlin.where
 import java.util.*
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     
@@ -46,17 +34,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         setContentView(mMainActBinding.root)
-    
-        performTest("main thread") {
-            Thread {
-                performTest("background thread items") {
-                    // User perform Test
-                    performUserTest("main thread users") {
-                        Thread { performUserTest("background thread users") }.start()
-                    }
-                }
-            }.start()
-        }
+
+                        thread { performUserTest("background thread users") }
+//        performTest("main thread") {
+//            thread {
+//                performTest("background thread items") {
+//                    // User perform Test
+//                    performUserTest("main thread users") {
+//                        thread { performUserTest("background thread users") }
+//                    }
+//                }
+//            }
+//        }
     }
     
     override fun onDestroy() {
@@ -138,7 +127,11 @@ class MainActivity : AppCompatActivity() {
         val singleSubscription = User().queryAllAsSingle().subscribe { it ->
             addMessage("Single received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
         }
-        
+
+        querySortedAsync<User>({
+            addMessage("querySortedAsync received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
+        }, "userId", Sort.DESCENDING)
+
         User().queryAllAsync {
             addMessage("queryAllAsync1 received on ${if(Looper.myLooper() == Looper.getMainLooper()) "main thread" else "background thread"}, total items: " + it.size)
         }

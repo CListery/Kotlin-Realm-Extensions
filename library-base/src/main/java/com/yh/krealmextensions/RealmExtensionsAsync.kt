@@ -111,7 +111,7 @@ internal fun <T : RealmModel> querySortedAsync(callback: (List<T>) -> Unit, fiel
         
         val realmQuery = realm.where(javaClass)
         query?.invoke(realmQuery)
-        val result = realmQuery.findAllAsync().sort(fieldName.toTypedArray(), order.toTypedArray())
+        val result = realmQuery.sort(fieldName.toTypedArray(), order.toTypedArray()).findAllAsync()
         result.addChangeListener(object : RealmChangeListener<RealmResults<T>> {
             override fun onChange(t: RealmResults<T>) {
                 result.removeChangeListener(this)
