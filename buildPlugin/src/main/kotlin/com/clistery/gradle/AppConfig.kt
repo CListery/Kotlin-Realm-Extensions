@@ -8,6 +8,6 @@ object AppConfig {
     
     const val GROUP_ID = "com.clistery.app"
     const val ARTIFACT_ID = "kotlin-realm-ext"
-    const val versionName = "3.0.6"
-    const val versionCode = 46
+    const val versionName = "3.0.7"
+    const val versionCode = 47
 }

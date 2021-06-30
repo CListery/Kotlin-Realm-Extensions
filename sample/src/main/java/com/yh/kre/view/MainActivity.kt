@@ -35,17 +35,16 @@ class MainActivity : AppCompatActivity() {
         
         setContentView(mMainActBinding.root)
 
+        performTest("main thread") {
+            thread {
+                performTest("background thread items") {
+                    // User perform Test
+                    performUserTest("main thread users") {
                         thread { performUserTest("background thread users") }
-//        performTest("main thread") {
-//            thread {
-//                performTest("background thread items") {
-//                    // User perform Test
-//                    performUserTest("main thread users") {
-//                        thread { performUserTest("background thread users") }
-//                    }
-//                }
-//            }
-//        }
+                    }
+                }
+            }
+        }
     }
     
     override fun onDestroy() {

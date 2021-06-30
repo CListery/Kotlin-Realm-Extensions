@@ -5,12 +5,15 @@ import com.yh.kre.model.UserModule
 import com.yh.krealmextensions.RealmConfigManager
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import kotlin.concurrent.thread
 
 class Application : MultiDexApplication() {
     
     override fun onCreate() {
         super.onCreate()
-        
+
+        RealmConfigManager.isDebugMode = true
+
         Realm.init(this)
         val userAddressConfig = RealmConfiguration.Builder()
             .name("user-db")
