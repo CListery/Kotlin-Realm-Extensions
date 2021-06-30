@@ -1,9 +1,9 @@
 package com.yh.krealmextensions
 
-import io.realm.Realm
-import io.realm.RealmModel
-import io.realm.RealmQuery
-import io.realm.Sort
+import androidx.annotation.VisibleForTesting
+import com.yh.krealmextensions.ext.safeAccess
+import io.realm.*
+import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Field
 
 typealias Query<T> = RealmQuery<T>.() -> Unit
@@ -12,23 +12,37 @@ typealias Query<T> = RealmQuery<T>.() -> Unit
  * Extensions for Realm. All methods here are synchronous.
  */
 
-/**
- * Query to the database with RealmQuery instance as argument
- */
-fun <T : RealmModel> T.query(query: Query<T>): List<T> {
+fun <T : RealmModel> T.range(startPos: Int, endPos: Int): List<T> {
     getRealmInstance().use { realm ->
-        val result = realm.where(javaClass).withQuery(query).findAll()
-        return realm.copy(result)
+        val result = realm.where(javaClass).findAll()
+        return result.loadRange(startPos, endPos)
+    }
+}
+
+inline fun <reified T : RealmModel> range(startPos: Int, endPos: Int): List<T> {
+    getRealmInstance<T>().use { realm ->
+        val result = realm.where(T::class.java).findAll()
+        return result.loadRange(startPos, endPos)
     }
 }
 
 /**
  * Query to the database with RealmQuery instance as argument
  */
-inline fun <reified T : RealmModel> query(query: Query<T>): List<T> {
+fun <T : RealmModel> T.query(startPos: Int = -1, endPos: Int = -1, query: Query<T>): List<T> {
+    getRealmInstance().use { realm ->
+        val result = realm.where(javaClass).withQuery(query).findAll()
+        return result.loadRange(startPos, endPos)
+    }
+}
+
+/**
+ * Query to the database with RealmQuery instance as argument
+ */
+inline fun <reified T : RealmModel> query(startPos: Int = -1, endPos: Int = -1, query: Query<T>): List<T> {
     getRealmInstance<T>().use { realm ->
         val result = realm.where(T::class.java).runQuery(query).findAll()
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
@@ -120,68 +134,68 @@ inline fun <reified T : RealmModel> queryLast(query: Query<T>): T? {
 /**
  * Query to the database with RealmQuery instance as argument
  */
-fun <T : RealmModel> T.querySorted(fieldName: String, order: Sort, query: Query<T>): List<T> {
+fun <T : RealmModel> T.querySorted(fieldName: String, order: Sort, startPos: Int = -1, endPos: Int = -1, query: Query<T>): List<T> {
     getRealmInstance().use { realm ->
         val result = realm.where(this.javaClass).withQuery(query).findAll().sort(fieldName, order)
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
-inline fun <reified T : RealmModel> querySorted(fieldName: String, order: Sort, query: Query<T>): List<T> {
+inline fun <reified T : RealmModel> querySorted(fieldName: String, order: Sort, startPos: Int = -1, endPos: Int = -1, query: Query<T>): List<T> {
     getRealmInstance<T>().use { realm ->
         val result = realm.where(T::class.java).runQuery(query).findAll().sort(fieldName, order)
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
 /**
  * Query to the database with a specific order and a RealmQuery instance as argument
  */
-fun <T : RealmModel> T.querySorted(fieldName: List<String>, order: List<Sort>, query: Query<T>): List<T> {
+fun <T : RealmModel> T.querySorted(fieldName: List<String>, order: List<Sort>, startPos: Int = -1, endPos: Int = -1, query: Query<T>): List<T> {
     getRealmInstance().use { realm ->
         val result = realm.where(this.javaClass).withQuery(query).findAll().sort(fieldName.toTypedArray(), order.toTypedArray())
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
-inline fun <reified T : RealmModel> querySorted(fieldName: List<String>, order: List<Sort>, query: Query<T>): List<T> {
+inline fun <reified T : RealmModel> querySorted(fieldName: List<String>, order: List<Sort>, startPos: Int = -1, endPos: Int = -1, query: Query<T>): List<T> {
     getRealmInstance<T>().use { realm ->
         val result = realm.where(T::class.java).runQuery(query).findAll().sort(fieldName.toTypedArray(), order.toTypedArray())
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
 /**
  * Query to the database with a specific order
  */
-fun <T : RealmModel> T.querySorted(fieldName: String, order: Sort): List<T> {
+fun <T : RealmModel> T.querySorted(fieldName: String, order: Sort, startPos: Int = -1, endPos: Int = -1): List<T> {
     getRealmInstance().use { realm ->
         val result = realm.where(this.javaClass).findAll().sort(fieldName, order)
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
-inline fun <reified T : RealmModel> querySorted(fieldName: String, order: Sort): List<T> {
+inline fun <reified T : RealmModel> querySorted(fieldName: String, order: Sort, startPos: Int = -1, endPos: Int = -1): List<T> {
     getRealmInstance<T>().use { realm ->
         val result = realm.where(T::class.java).findAll().sort(fieldName, order)
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
 /**
  * Query to the database with a specific order
  */
-fun <T : RealmModel> T.querySorted(fieldName: List<String>, order: List<Sort>): List<T> {
+fun <T : RealmModel> T.querySorted(fieldName: List<String>, order: List<Sort>, startPos: Int = -1, endPos: Int = -1): List<T> {
     getRealmInstance().use { realm ->
         val result = realm.where(this.javaClass).findAll().sort(fieldName.toTypedArray(), order.toTypedArray())
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
-inline fun <reified T : RealmModel> querySorted(fieldName: List<String>, order: List<Sort>): List<T> {
+inline fun <reified T : RealmModel> querySorted(fieldName: List<String>, order: List<Sort>, startPos: Int = -1, endPos: Int = -1): List<T> {
     getRealmInstance<T>().use { realm ->
         val result = realm.where(T::class.java).findAll().sort(fieldName.toTypedArray(), order.toTypedArray())
-        return realm.copy(result)
+        return result.loadRange(startPos, endPos)
     }
 }
 
@@ -360,31 +374,31 @@ inline fun <reified T : RealmModel> T.queryAndUpdate(noinline query: Query<T>, n
 }
 
 /**
- * Get count of entries
+ * Use RealmQuery instance as a parameter to query the number of eligible elements in the database
  */
-fun <T : RealmModel> T.count(): Long {
-    getRealmInstance().use { realm ->
-        return realm.where(this::class.java).count()
+fun <T : RealmModel> T.count(query: Query<T>? = null): Long = count(null, query, this.javaClass)
+
+/**
+ * Use RealmQuery instance as a parameter to query the number of eligible elements in the database
+ */
+inline fun <reified T : RealmModel> count(noinline query: Query<T>? = null): Long = count(null, query, T::class.java)
+
+fun <T : RealmModel> T.count(realm: Realm, query: Query<T>? = null): Long = count(realm, query, this.javaClass)
+
+inline fun <reified T : RealmModel> count(realm: Realm, noinline query: Query<T>? = null): Long = count(realm, query, T::class.java)
+
+@PublishedApi
+internal fun <T : RealmModel> count(realm: Realm? = null, query: Query<T>? = null, javaClass: Class<T>): Long {
+    fun action(r: Realm): Long {
+        val realmQuery = r.where(javaClass)
+        query?.invoke(realmQuery)
+        return realmQuery.count()
     }
-}
-
-fun <T : RealmModel> T.count(realm: Realm): Long {
-    return realm.where(this::class.java).count()
-}
-
-inline fun <reified T : RealmModel> count(): Long {
-    getRealmInstance<T>().use { realm ->
-        return realm.where(T::class.java).count()
+    if(null != realm){
+        return action(realm)
     }
-}
-
-inline fun <reified T : RealmModel> count(realm: Realm): Long {
-    return realm.where(T::class.java).count()
-}
-
-inline fun <reified T : RealmModel> count(query: Query<T>): Long {
-    getRealmInstance<T>().use { realm ->
-        return realm.where(T::class.java).runQuery(query).count()
+    getRealmInstance(javaClass).use { r ->
+        return action(r)
     }
 }
 
@@ -448,16 +462,15 @@ inline fun <reified T : RealmModel> getPrimaryKeyFieldName(realm: Realm): String
 inline fun <reified T : RealmModel> T.setPk(realm: Realm, value: Long) {
     getPrimaryKeyFieldName(realm)?.let { fieldName ->
         val f1 = javaClass.getDeclaredField(fieldName)
-        if (f1.type != Long::class.java) {
+        if (!f1.type.isInstance(1L)) {
             throw IllegalArgumentException("Primary key field $fieldName must be of type Long to set a primary key automatically")
         }
-        val accesible = f1.isAccessible
-        f1.isAccessible = true
-        if (f1.isInValidLongPk(this)) {
-            //We only set pk value if it does not have any value previously
-            f1.set(this, value)
+        f1.safeAccess {
+            if (it.isInValidLongPk(this)) {
+                //We only set pk value if it does not have any value previously
+                it.set(this, value)
+            }
         }
-        f1.isAccessible = accesible
     }
 }
 
@@ -493,3 +506,18 @@ fun Field.isNullFor(obj: Any) = try {
 }
 
 fun Field.isInValidLongPk(obj: Any) = isNullFor(obj) || get(obj) == Long.MIN_VALUE
+
+fun <T : RealmModel> RealmResults<T>.loadRange(startPos: Int, endPos: Int): List<T> {
+    if (startPos < 0) {
+        return realm.copy(this)
+    }
+    if (startPos > endPos) {
+        throw IllegalArgumentException("startPos($startPos) > endPos($endPos)")
+    }
+    val range = mutableListOf<T>()
+    for (pos in startPos until endPos) {
+        val t = getOrNull(pos) ?: break
+        range.add(t)
+    }
+    return realm.copy(range)
+}

@@ -506,6 +506,37 @@ class KRealmExtensionsTests {
     }
 
     /**
+     * Range TEST
+     */
+    @Test
+    fun testRangeReturnEmptyCollectionWhenDBIsEmpty() {
+        assertThat(range<TestEntity>(0, 10)).hasSize(0)
+    }
+
+    @Test
+    fun testRangeReturnNotEmptyCollectionWhenDBIsNotEmpty() {
+        populateDBWithTestEntity(20)
+        assertThat(range<TestEntity>(5, 15)).hasSize(10)
+    }
+
+    @Test
+    fun testQueryRangeReturnEmptyCollectionWhenDBIsEmpty() {
+        assertThat(query<TestEntity>(0, 10) { like("name", "1") }).isEmpty()
+    }
+
+    @Test
+    fun testQueryRangeReturnNotEmptyCollectionWhenDBIsNotEmpty() {
+        for (index in 0..20) {
+            TestEntity("name$index").save()
+        }
+        assertThat(query<TestEntity>(0, 20) {
+            like("name", "name1")
+            or()
+            like("name", "name11")
+        }).hasSize(2)
+    }
+
+    /**
      * UTILITY TEST METHODS
      */
     private fun populateDBWithTestEntity(numItems: Int) {

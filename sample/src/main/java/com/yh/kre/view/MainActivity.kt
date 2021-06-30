@@ -13,9 +13,9 @@ import com.yh.kre.model.Address
 import com.yh.kre.model.Item
 import com.yh.kre.model.User
 import com.yh.krealmextensions.*
-import io.realm.*
-import io.realm.kotlin.where
-import java.util.*
+import io.realm.OrderedCollectionChangeSet
+import io.realm.Realm
+import io.realm.Sort
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
@@ -59,7 +59,9 @@ class MainActivity : AppCompatActivity() {
         
         deleteAll<User>()
         addTimingMessageBlock("DB populated with $userSize users") { populateUserDb(userSize) }
-        
+
+        addTimingMessageBlock(mapOf("User count: %s" to { count<User>(getRealmInstance<User>()) }))
+
         addMessage("DB populated with $userSize users")
         
         addMessage("Querying users on $threadName...")
