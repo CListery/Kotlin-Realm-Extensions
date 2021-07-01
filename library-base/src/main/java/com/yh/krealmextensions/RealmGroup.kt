@@ -91,11 +91,7 @@ internal fun <T : RealmModel> internalDistinctGroup(
             return emptyList()
         }
         val distinctResult = distinctQuery.findAll()
-        return if (startPos < 0 || endPos > distinctCount) {
-            realm.copy(distinctResult)
-        } else {
-            distinctResult.loadRange(startPos, endPos)
-        }
+        return distinctResult.loadRange(startPos, endPos)
     }
 }
 

@@ -324,6 +324,34 @@ class KRealmGroupTests {
         }
     }
 
+    @Test
+    fun testDistinctGroupWithRange() {
+        for (pos in 0 until 100) {
+            TestEntity("name_$pos", "type_${pos % 60}").save()
+        }
+        block {
+            assertThat(distinctGroup<TestEntity, String>("type", startPos = 0, endPos = 50)).hasSize(50)
+            assertThat(distinctGroup<TestEntity, String>("type", startPos = 0, endPos = 50).first().name).isEqualTo("name_0")
+            assertThat(distinctGroup<TestEntity, String>("type", startPos = 50, endPos = 100)).hasSize(10)
+            assertThat(distinctGroup<TestEntity, String>("type", startPos = 50, endPos = 100).first().name).isEqualTo("name_50")
+            release()
+        }
+    }
+
+    @Test
+    fun testDistinctGroupWithRange2() {
+        for (pos in 0 until 100) {
+            TestEntity("name_$pos", "type_${pos % 60}").save()
+        }
+        block {
+            assertThat(TestEntity().distinctGroup("type", String::class.java, startPos = 0, endPos = 50)).hasSize(50)
+            assertThat(TestEntity().distinctGroup("type", String::class.java, startPos = 0, endPos = 50).first().name).isEqualTo("name_0")
+            assertThat(TestEntity().distinctGroup("type", String::class.java, startPos = 50, endPos = 100)).hasSize(10)
+            assertThat(TestEntity().distinctGroup("type", String::class.java, startPos = 50, endPos = 100).first().name).isEqualTo("name_50")
+            release()
+        }
+    }
+
     private fun blockLatch() {
         if (!latchReleased) {
             latch.await()
