@@ -1,9 +1,7 @@
 package com.yh.krealmextensions
 
-import androidx.annotation.VisibleForTesting
 import com.yh.krealmextensions.ext.safeAccess
 import io.realm.*
-import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Field
 
 typealias Query<T> = RealmQuery<T>.() -> Unit
@@ -12,13 +10,19 @@ typealias Query<T> = RealmQuery<T>.() -> Unit
  * Extensions for Realm. All methods here are synchronous.
  */
 
+/**
+ * Get the collection in the specified range
+ */
 fun <T : RealmModel> T.range(startPos: Int, endPos: Int): List<T> {
     getRealmInstance().use { realm ->
-        val result = realm.where(javaClass).findAll()
+        val result = realm.where(this.javaClass).findAll()
         return result.loadRange(startPos, endPos)
     }
 }
 
+/**
+ * Get the collection in the specified range
+ */
 inline fun <reified T : RealmModel> range(startPos: Int, endPos: Int): List<T> {
     getRealmInstance<T>().use { realm ->
         val result = realm.where(T::class.java).findAll()
@@ -31,7 +35,7 @@ inline fun <reified T : RealmModel> range(startPos: Int, endPos: Int): List<T> {
  */
 fun <T : RealmModel> T.query(startPos: Int = -1, endPos: Int = -1, query: Query<T>): List<T> {
     getRealmInstance().use { realm ->
-        val result = realm.where(javaClass).withQuery(query).findAll()
+        val result = realm.where(this.javaClass).withQuery(query).findAll()
         return result.loadRange(startPos, endPos)
     }
 }

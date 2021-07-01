@@ -9,7 +9,17 @@ open class TestEntity() : RealmObject() {
 
     var name: String = ""
 
+    var type: String = ""
+
+    var time: Long = -1
+
     constructor(name: String) : this() {
         this.name = name
+    }
+
+    constructor(name: String, type: String, time: Long = System.currentTimeMillis()) : this() {
+        this.name = name
+        this.type = type
+        this.time = time
     }
 }
