@@ -1,10 +1,12 @@
- <p align="center">
+<p align="center">
   <img width="80%" src ="/krealmextensions.png" />
 </p>
 
-**Simplify your code to its minimum expression with this set of Kotlin extensions for Realm. Forget all boilerplate related with Realm API and perform database operations in one line of code with this lightweight library. Full test coverage.**
+**The library is extended in [KRE](https://github.com/vicpinm/Kotlin-Realm-Extensions)**
 
-## Download for Kotlin 1.3 and Realm 5.9
+**This library is Realm's Kotlin syntax extension, which simplifies your code for realm database operations to minimal expressions. Forget all the boilerplate files related to Realm API, use this lightweight library to perform database operations in one line of code. The library has complete unit test coverage.**
+
+## Download for Kotlin 1.5 and Realm 10.5
 
 Grab via Gradle:
 
@@ -13,22 +15,12 @@ repositories {
     mavenCentral()
 }
 
-implementation "com.github.vicpinm:krealmextensions:2.5.0"
+implementation("io.github.clistery:kotlin-realm-ext:3.1.0")
 
 //For Single and Flowable queries:
-implementation 'io.reactivex.rxjava2:rxjava:2.1.16'
-implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+implementation("io.reactivex.rxjava2:rxjava:2.2.19")
+implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
 ```
-
-## Previous versions of Kotlin and Realm
-* Version 2.4.0 for Kotlin 1.3.x and Realm 5.8.x
-* Version 2.3.0 for Kotlin 1.3.x and Realm 5.7.x
-* Version 2.2.0 for Kotlin 1.2.x and Realm 5.0.x
-* Version 2.1.3 for Kotlin 1.2.x and Realm 4.3.x
-* Version 2.0.0 for Kotlin 1.1.x and Realm 4.1.x
-* Version 1.2.0 for Kotlin 1.1.x and Realm 3.5.x
-* Version 1.0.9 for Kotlin 1.1.x and Realm 3.1.x
-* Version 1.0.6 for Kotlin 1.1.x and Realm 2.2.x
 
 ## Features
 
@@ -260,6 +252,27 @@ executeTransaction {
    User().deleteAll() //Or deleteAll<User>()
    newUsers.saveAll()
 }
+```
+
+### Range
+If you want to query the specified range (pagination) results, you can do:
+
+```kotlin
+User().range(0, 10) //Or range<User>(0, 10)
+```
+
+### Distinct Group
+If you want to query the unique group-by set in a given range, you can do:
+
+```kotlin
+User().distinctGroup("name", String::class.java) //Or distinctGroup<User, String>("name")
+```
+
+### Group By
+if you want query specify field to group and take out the mapping set in the given range, you can do:
+
+```kotlin
+User().groupBy("name", String::class.java) //Or groupBy<User, String>("name")
 ```
 
 ### Threads management
