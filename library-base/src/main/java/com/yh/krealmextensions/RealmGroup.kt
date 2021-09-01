@@ -1,6 +1,6 @@
 package com.yh.krealmextensions
 
-import com.yh.krealmextensions.ext.safeGet
+import com.kotlin.safeGet
 import io.realm.RealmModel
 import io.realm.Sort
 import java.lang.reflect.Field

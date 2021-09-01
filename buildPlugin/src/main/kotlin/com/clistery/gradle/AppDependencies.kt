@@ -3,7 +3,11 @@ package com.clistery.gradle
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
 object AppDependencies {
-    
+
+    object clistery{
+        const val appinject = "io.github.clistery:appinject:1.4.4"
+    }
+
     object realm{
         const val annotations = "io.realm:realm-annotations:${AppVersion.realm.version}"
         const val processor = "io.realm:realm-annotations-processor:${AppVersion.realm.version}"

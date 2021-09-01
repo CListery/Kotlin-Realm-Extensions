@@ -1,9 +1,9 @@
 package com.yh.krealmextensions
 
 import android.util.Log
+import com.kotlin.safeCreator
+import com.kotlin.safeFieldGet
 import com.yh.krealmextensions.ext.printString
-import com.yh.krealmextensions.ext.safeCreator
-import com.yh.krealmextensions.ext.safeFieldGet
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmModel

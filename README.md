@@ -15,7 +15,8 @@ repositories {
     mavenCentral()
 }
 
-implementation("io.github.clistery:kotlin-realm-ext:3.1.0")
+implementation("io.github.clistery:kotlin-realm-ext:3.1.1")
+implementation("io.github.clistery:appinject:1.4.4")
 
 //For Single and Flowable queries:
 implementation("io.reactivex.rxjava2:rxjava:2.2.19")

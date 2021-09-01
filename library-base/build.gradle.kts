@@ -52,7 +52,8 @@ dependencies {
     compileOnly("io.reactivex.rxjava2:rxjava:2.2.19")
     compileOnly("io.reactivex.rxjava2:rxandroid:2.1.1")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("androidx.multidex:multidex:2.0.1")
+    androidTestImplementation("androidx.multidex:multidex:2.0.1")
+    androidTestImplementation(AppDependencies.clistery.appinject)
     androidTestImplementation("com.android.support.test:runner:1.0.2")
     androidTestImplementation("com.android.support.test:rules:1.0.2")
     androidTestImplementation("com.google.truth:truth:0.31")
@@ -60,6 +61,7 @@ dependencies {
     androidTestImplementation("io.reactivex.rxjava2:rxandroid:2.1.1")
     kaptAndroidTest(AppDependencies.realm.annotations)
     kaptAndroidTest(AppDependencies.realm.processor)
+    compileOnly(AppDependencies.clistery.appinject)
 }
 
 val androidJavadocs by tasks.register<Javadoc>("androidJavadocs") {

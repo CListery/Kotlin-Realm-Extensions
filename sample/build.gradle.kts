@@ -58,4 +58,5 @@ dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
     implementation(project(mapOf("path" to ":library-base")))
     testImplementation("junit:junit:4.13.2")
+    implementation(AppDependencies.clistery.appinject)
 }

@@ -1,6 +1,6 @@
 package com.yh.krealmextensions
 
-import com.yh.krealmextensions.ext.safeAccess
+import com.kotlin.safeAccess
 import io.realm.*
 import java.lang.reflect.Field
 
