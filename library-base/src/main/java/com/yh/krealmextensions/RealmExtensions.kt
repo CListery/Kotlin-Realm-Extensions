@@ -466,7 +466,7 @@ inline fun <reified T : RealmModel> getPrimaryKeyFieldName(realm: Realm): String
 inline fun <reified T : RealmModel> T.setPk(realm: Realm, value: Long) {
     getPrimaryKeyFieldName(realm)?.let { fieldName ->
         val f1 = javaClass.getDeclaredField(fieldName)
-        if (!f1.type.isInstance(1L)) {
+        if (f1.type != Long::class.java) {
             throw IllegalArgumentException("Primary key field $fieldName must be of type Long to set a primary key automatically")
         }
         f1.safeAccess {
